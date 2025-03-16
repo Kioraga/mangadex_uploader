@@ -1,4 +1,5 @@
-import nodriver as uc
+import asyncio
+import zendriver as zd
 from bs4 import BeautifulSoup
 from pathlib import Path
 
@@ -12,7 +13,7 @@ class File:
         return f"Name: {self.name}, URL: {self.url}"
 
 
-async def accept_cookies(page: uc.Tab):
+async def accept_cookies(page: zd.Tab):
     cookie_bar_accept = await page.find("consentir", best_match=True)
     if cookie_bar_accept:
         await cookie_bar_accept.click()
@@ -20,9 +21,9 @@ async def accept_cookies(page: uc.Tab):
     await page.sleep(1)
 
 
-async def get_chapters(browser: uc.Browser) -> list[File]:
+async def get_chapters(browser: zd.Browser) -> list[File]:
     # visit the target website
-    page: uc.Tab = await browser.get(
+    page: zd.Tab = await browser.get(
         "https://www.fireload.com/folder/16f514a491fab2909938bff3faf0ca3c/Capítulos"
     )
     await page
@@ -60,7 +61,7 @@ async def get_chapters(browser: uc.Browser) -> list[File]:
     return file_data
 
 
-async def download_file(browser: uc.Browser, file: File, download_folder: Path):
+async def download_file(browser: zd.Browser, file: File, download_folder: Path):
     file_name = file.name
     file_url = file.url
 
@@ -115,24 +116,17 @@ async def download_file(browser: uc.Browser, file: File, download_folder: Path):
 
 
 async def scraper():
-    browser = await uc.start()
+    browser = await zd.start()
 
     download_folder = Path("downloads/mugiwara_scans")
 
     file_data = await get_chapters(browser)
 
-    # download the last 10 files
-    for file in file_data[-10:]:
-        await download_file(browser, file, download_folder)
-
-    for i in range(10):
-        print(f"Downloading file {i + 1} of 10...")
-        await download_file(browser, file_data[i], download_folder)
-
+    await download_file(browser, file_data[-1], download_folder)
 
     browser.stop()
 
 
 # run the scraper function with asyncio
 if __name__ == "__main__":
-    uc.loop().run_until_complete(scraper())
+    asyncio.run(scraper())
