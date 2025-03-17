@@ -3,14 +3,53 @@ import zendriver as zd
 from bs4 import BeautifulSoup
 from pathlib import Path
 
+url = "https://www.fireload.com/folder/16f514a491fab2909938bff3faf0ca3c/Capítulos"
+download_folder = Path("downloads/mugiwara_scans")
+
 
 class File:
-    def __init__(self, name, url):
-        self.name = name
-        self.url = url
+    def __init__(self, name: str, url: str):
+        self.__name = name
+        self.__url = url
+
+    @property
+    def name(self):
+        return self.__name
+
+    @name.setter
+    def name(self, name):
+        self.__name = name
+
+    @property
+    def url(self):
+        return self.__url
+
+    @url.setter
+    def url(self, url):
+        self.__url = url
 
     def __str__(self):
         return f"Name: {self.name}, URL: {self.url}"
+
+
+class Chapter(File):
+    def __init__(self, name, url):
+        super().__init__(name, url)
+        #TODO: Fix this
+        #self.__number = int(name.split(" ")[-1])
+        self.__number = 0
+
+    @File.name.setter
+    def name(self, name):
+        File.name.fset(self, name)
+        #self.__number = int(name.split(" ")[-1])
+
+    @property
+    def number(self):
+        return self.__number
+
+    def __str__(self):
+        return f"Number: {self.number}, URL: {self.url}"
 
 
 async def accept_cookies(page: zd.Tab):
@@ -21,11 +60,9 @@ async def accept_cookies(page: zd.Tab):
     await page.sleep(1)
 
 
-async def get_chapters(browser: zd.Browser) -> list[File]:
+async def get_files(browser: zd.Browser) -> list[File]:
     # visit the target website
-    page: zd.Tab = await browser.get(
-        "https://www.fireload.com/folder/16f514a491fab2909938bff3faf0ca3c/Capítulos"
-    )
+    page: zd.Tab = await browser.get(url)
     await page
 
     # get files from all pages
@@ -115,18 +152,31 @@ async def download_file(browser: zd.Browser, file: File, download_folder: Path):
         time += 1
 
 
-async def scraper():
+async def download_latest_chapter(browser: zd.Browser, file_data: list[File]):
+    await download_file(browser, file_data[-1], download_folder)
+
+
+async def download_all_chapters(browser: zd.Browser, file_data: list[File]):
+    for file in file_data:
+        await download_file(browser, file, download_folder)
+
+
+async def download_last_n_chapters(browser: zd.Browser, file_data: list[File], n: int):
+    for file in file_data[-n:]:
+        await download_file(browser, file, download_folder)
+
+
+async def main():
     browser = await zd.start()
 
-    download_folder = Path("downloads/mugiwara_scans")
+    file_data = await get_files(browser)
+    chapters = [Chapter(file.name, file.url) for file in file_data]
 
-    file_data = await get_chapters(browser)
-
-    await download_file(browser, file_data[-1], download_folder)
+    print(f"Name: {chapters[-1].name}, Number: {chapters[-1].number}")
 
     browser.stop()
 
 
 # run the scraper function with asyncio
 if __name__ == "__main__":
-    asyncio.run(scraper())
+    asyncio.run(main())
