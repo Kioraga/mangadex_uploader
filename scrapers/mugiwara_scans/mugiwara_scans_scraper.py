@@ -35,14 +35,14 @@ class File:
 class Chapter(File):
     def __init__(self, name, url):
         super().__init__(name, url)
-        #TODO: Fix this
-        #self.__number = int(name.split(" ")[-1])
+        # T
+        # self.__number = int(name.split(" ")[-1])
         self.__number = 0
 
     @File.name.setter
     def name(self, name):
         File.name.fset(self, name)
-        #self.__number = int(name.split(" ")[-1])
+        # self.__number = int(name.split(" ")[-1])
 
     @property
     def number(self):
